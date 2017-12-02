@@ -4,7 +4,6 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Promise;
 
-//use App\RobloxUniverse\WebAPI\UserInventory;
 use function GuzzleHttp\Promise\promise_for;
 
 class UserInventoryWorker
@@ -47,8 +46,6 @@ class UserInventoryWorker
 		$query = http_build_query($query_obj);
 		$req_url = $req_url_base . '?' . $query;
 
-		//print_r(['getResultsPage', $req_url]);
-
 		if(!$client || !isset($client)){
 			die('client missing');
 		}
@@ -58,21 +55,11 @@ class UserInventoryWorker
 
 	public function makeOnPageFulfilled(){
 		$OPF = function($response){
-			// dump('HereA');
-
-			//print_r(['on page fulfilled',$response]);
-
 			$result_decoded = $this->decodeResponse($response);
-
-			// dump('HereB');
 
 			$this->full_results = array_merge($this->full_results, call_user_func($this->fn_get_nested_data,$result_decoded));
 
-			// dump('HereC');
-
 			$next_page_cursor = call_user_func($this->fn_get_next_page_cursor,$result_decoded);
-
-			// dump(['HereD', $next_page_cursor]);
 
 			if($next_page_cursor) {
 				$this->page_number++;
@@ -81,27 +68,16 @@ class UserInventoryWorker
 				$this->query_obj['cursor'] = $next_page_cursor;
 				$this->query_obj['pageNumber'] = $this->page_number;
 
-				//dump(['loading next page of results...', $this->query_obj]);
-				//\Log::info(var_export(['loading next page of results...', $this->query_obj], true));
-
 				$next_promise = $this->getResultsPage(
 						$this->req_url_base,
 						$this->query_obj,
 						$this->type,
 						$this->client
 					);
-				$myOnPageFulfilled = $this->makeOnPageFulfilled(); //call_user_func($this->makeOnPageFulfilled);
-				//dump($myOnPageFulfilled);
+				$myOnPageFulfilled = $this->makeOnPageFulfilled(); 
 				$next_promise->then($myOnPageFulfilled);
 				$this->result_promise->resolve($next_promise);
 			}else {
-				//dump(['all pages fetched', $this->page_number, $next_page_cursor]);
-//                \Log::info(var_export(['all pages fetched',
-//                                          $this->query_obj,
-//                                          $this->page_number,
-//                                          $next_page_cursor,
-//                                          count($this->full_results)],
-//                                      true));
 				$this->pages_remaining = false;
 
 				$resolution_object = (object) [
