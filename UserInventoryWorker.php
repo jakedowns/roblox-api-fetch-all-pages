@@ -4,8 +4,6 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Promise;
 
-use function GuzzleHttp\Promise\promise_for;
-
 class UserInventoryWorker
 {
 	public function getAsPromise(
