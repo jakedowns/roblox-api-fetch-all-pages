@@ -2,6 +2,7 @@
 
 require 'UserInventoryWorker.php';
 
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Promise\Promise;
 
@@ -16,25 +17,6 @@ class RobloxAPIService
 	public function __construct(){
 		$this->curlMulti = new CurlMultiHandler();
         $this->client = $this->_make_client();
-	}
-
-	// Shared Singleton Client
-	// Necessary for stepped-async parallelism 
-	private function _make_client(){
-		$curlMulti = $this->curlMulti;
-	    $opts = [
-	        'verify' => false,
-	        'base_uri' => '',
-	        'allow_redirects' => true,
-	        'timeout' => 0,
-	        'http_errors' => false,
-	        'headers' => [
-	          'Cache-Control' => 'no-cache'
-	        ]
-	    ];
-
-	    $client = new GuzzleHttp\Client($opts);
-	    return $client;
 	}
 	
 	/**
@@ -53,20 +35,70 @@ class RobloxAPIService
 	public function get_total_rap_for_user($user_id)
 	{
 		$this->user_id = $user_id;
-		$promises = $this->getAssetTypePromises();
+		$limiteds = $this->get_all_limiteds_concurrent();
 
+        $total_rap = 0;
+        $total_rap_avg = 0;
+        $total_limiteds = 0;
+
+        foreach($limiteds as $assetType => $assetsForType){
+            foreach($assetsForType->items as $asset){
+                $total_limiteds++;
+                $total_rap += floatval($asset->recentAveragePrice);
+            }
+        }
+
+        if($total_limiteds){
+            $total_rap_avg = $total_rap / $total_limiteds;
+        }
+
+        return (object) [
+            'total_limiteds' => $total_limiteds,
+            'total_rap' => $total_rap,
+            'total_rap_avg' => $total_rap_avg,
+            'limiteds_by_asset_type' => $limiteds
+        ];
+	}
+
+	private function get_all_limiteds_concurrent()
+	{
+		$promises = $this->getAssetTypePromises();
 		$results = $this->waitForPromiseGroup($promises, function($results, $single_result){
-			print(json_encode($single_result));
 			if (isset($single_result['value'])) {
+				$data = [];
+				if(isset($single_result['value']->data)){
+					$data = $single_result['value']->data;
+				}
                 $results->{$single_result['value']->assetType} = (object)[
-                    'total_items' => count($single_result['value']->data),
-                    'items'       => $single_result['value']->data
+                    'total_items' => count($data),
+                    'items'       => $data
                 ];
             }
 			return $results;
 		});
 
 		return $results;
+	}
+
+	// Shared Singleton Client
+	// Necessary for stepped-async parallelism 
+	private function _make_client(){
+		$curlMulti = $this->curlMulti;
+		$stack = HandlerStack::create($curlMulti);
+	    $opts = [
+	    	'handler' => $stack,
+	        'verify' => false,
+	        'base_uri' => '',
+	        'allow_redirects' => true,
+	        'timeout' => 0,
+	        'http_errors' => false,
+	        'headers' => [
+	          'Cache-Control' => 'no-cache'
+	        ]
+	    ];
+
+	    $client = new GuzzleHttp\Client($opts);
+	    return $client;
 	}
 
 	private function getAssetTypePromises()
@@ -142,16 +174,10 @@ class RobloxAPIService
 
     public function waitForPromiseGroup($promises, $foldResults_fn) {
       $this->settled = false;
-      $results = [];
+      $results = (object) [];
 
       $group = \GuzzleHttp\Promise\settle($promises)->then(function ($promise_results) use (&$results, $foldResults_fn) {
-        //dump(['$group: $promises settled?', $promise_results]);
         $this->settled = true;
-
-        //dd($promise_results);
-
-        print("promise settled");
-
         try {
           foreach ($promise_results as $result) {
             $results = call_user_func($foldResults_fn, $results, $result);
@@ -159,8 +185,6 @@ class RobloxAPIService
         }catch(\Exception $e){
           //dd($e);
         }
-
-        //dd($results);
       });
 
       // Debugging loop, ticks in background
@@ -178,16 +202,18 @@ class RobloxAPIService
           // or empty queue detected
           // || \GuzzleHttp\Promise\queue()->isEmpty()
         ){
-		  //die("script broke");
+		  print("<br/>script broke");
           $broken = true;
           break;
         }
         usleep(1);
       }
 
-      //dd($promises);
-      //\Log::info('waitForPromiseGroup ran for ' . $ticks . ' ticks');
-      //\Log::info('promise states?' . dump($promises));
+      // DEBUG Helper
+      // print("<br/>waitForPromiseGroup ran for $ticks ticks");
+      // foreach($promises as $promise){
+      // 	print("<br>" . $promise->getState());
+      // }
 
       return $results;
     }

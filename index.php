@@ -10,7 +10,7 @@ function original_example() {
 
 	$rap2 = 0;
 
-	$exec_time_start = microtime();
+	$exec_time_start = microtime(true);
 	$items_total = 0;
 	$pages_total = 0;
 	foreach($assettypes as $assettype){
@@ -33,23 +33,21 @@ function original_example() {
 		'total_rap' => $rap2,
 		'items' => $items_total,
 		'pages' => $pages_total,
-		'rendertime' => (microtime() - $exec_time_start)
+		'rendertime' => (microtime(true) - $exec_time_start)
 	]);
 }
 
 function parallel_example(){
-	$exec_time_start = microtime();
+	$exec_time_start = microtime(true);
 
 	$userid = htmlentities($_GET['userid'], ENT_QUOTES);
 	$results = (new RobloxAPIService())->get_total_rap_for_user($userid);
 
-	die(var_export(['parallel_example',$results]));
+	//die(var_export(['parallel_example',$results]));
 
 	echo json_encode([
-		'total_rap' => $results->total_rap,
-		'items' => $results->items_total,
-		'pages' => $results->pages_total,
-		'rendertime' => (microtime() - $exec_time_start)
+		'results' => $results,
+		'rendertime' => microtime(true) - $exec_time_start
 	]);
 }
 

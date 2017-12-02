@@ -3,7 +3,6 @@
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Promise\Coroutine;
 
 //use App\RobloxUniverse\WebAPI\UserInventory;
 use function GuzzleHttp\Promise\promise_for;
@@ -48,7 +47,7 @@ class UserInventoryWorker
         $query = http_build_query($query_obj);
         $req_url = $req_url_base . '?' . $query;
 
-        //dump(['getResultsPage', $req_url]);
+        //print_r(['getResultsPage', $req_url]);
 
         if(!$client || !isset($client)){
             die('client missing');
@@ -61,7 +60,7 @@ class UserInventoryWorker
         $OPF = function($response){
             // dump('HereA');
 
-            print('on page fulfilled');
+            //print_r(['on page fulfilled',$response]);
 
             $result_decoded = $this->decodeResponse($response);
 
@@ -105,11 +104,6 @@ class UserInventoryWorker
 //                                      true));
                 $this->pages_remaining = false;
 
-                //dump(['check', $this->result_promise, $this->wrapperCoroutine]);
-
-                // $this->result_promise->resolve($this->full_results);
-                // $this->wrapperCoroutine->resolve($this->full_results);
-                // $this->fullResultPromise->resolve($this->full_results);
                 $resolution_object = (object) [
                   'data' => $this->full_results
                 ];
