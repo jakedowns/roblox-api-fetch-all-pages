@@ -110,6 +110,7 @@ class UserInventoryWorker
                 if(isset($this->query_obj['assetType'])){
                   $resolution_object->{'assetType'} = $this->query_obj['assetType'];
                 }
+                $resolution_object->{'pages'} = $this->page_number; 
                 $this->finalOuterPromise->resolve($resolution_object);
             }
 

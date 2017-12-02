@@ -37,11 +37,13 @@ class RobloxAPIService
 		$this->user_id = $user_id;
 		$limiteds = $this->get_all_limiteds_concurrent();
 
+		$total_pages = 0;
         $total_rap = 0;
         $total_rap_avg = 0;
         $total_limiteds = 0;
 
         foreach($limiteds as $assetType => $assetsForType){
+        	$total_pages += $assetsForType->pages;
             foreach($assetsForType->items as $asset){
                 $total_limiteds++;
                 $total_rap += floatval($asset->recentAveragePrice);
@@ -53,6 +55,7 @@ class RobloxAPIService
         }
 
         return (object) [
+            'total_pages' => $total_pages,
             'total_limiteds' => $total_limiteds,
             'total_rap' => $total_rap,
             'total_rap_avg' => $total_rap_avg,
@@ -71,6 +74,7 @@ class RobloxAPIService
 				}
                 $results->{$single_result['value']->assetType} = (object)[
                     'total_items' => count($data),
+                    'pages' => $single_result['value']->pages,
                     'items'       => $data
                 ];
             }
