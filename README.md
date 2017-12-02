@@ -12,3 +12,5 @@ Includes an example for calculating Total Recent Average Price for all of a give
 
 1. `composer install`
 1. `http://localhost/?userid=SOME_ROBLOX_USERID`
+
+![example output](https://raw.githubusercontent.com/jakedowns/roblox-api-fetch-all-pages/master/screenshots/example.png)
