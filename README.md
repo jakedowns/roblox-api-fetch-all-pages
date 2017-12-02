@@ -1,7 +1,7 @@
 
 ## Roblox API Fetch All Pages
 
-An example PHP Script using Guzzle, Promises, & CurlMulti to completely fetch multiple pages of a user's full asset inventory at once.
+PHP Script using Guzzle, Promises, & CurlMulti to completely fetch paginated results from Roblox Web APIs in a single request
 
 Includes an example for calculating Total Recent Average Price for all of a given user's Collectible "Limiteds" Assets
 
