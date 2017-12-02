@@ -1,0 +1,14 @@
+{
+    "name": "jakedowns/roblox-rap-example",
+    "description": "script for fetching user total rap",
+    "authors": [
+        {
+            "name": "Jake Downs",
+            "email": "mail@jakedowns.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^6.3",
+        "nesbot/carbon": "^1.22"
+    }
+}
